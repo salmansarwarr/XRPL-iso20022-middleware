@@ -1,0 +1,35 @@
+{
+    "name": "hoodie-chicken-iso20022-middleware",
+    "version": "1.0.0",
+    "description": "XRPL to ISO 20022 middleware for Hoodie Chicken transactions",
+    "main": "src/app.js",
+    "scripts": {
+      "start": "node src/app.js",
+      "dev": "nodemon src/app.js",
+      "test": "jest"
+    },
+    "dependencies": {
+      "express": "^4.18.2",
+      "xrpl": "^2.11.0",
+      "mongoose": "^7.5.0",
+      "pg": "^8.11.3",
+      "sequelize": "^6.32.1",
+      "xml2js": "^0.6.2",
+      "xmlbuilder2": "^3.1.1",
+      "joi": "^17.9.2",
+      "helmet": "^7.0.0",
+      "cors": "^2.8.5",
+      "compression": "^1.7.4",
+      "winston": "^3.10.0",
+      "cron": "^2.4.4",
+      "jsonwebtoken": "^9.0.2",
+      "bcryptjs": "^2.4.3",
+      "dotenv": "^16.3.1",
+      "axios": "^1.5.0",
+      "uuid": "^9.0.0"
+    },
+    "devDependencies": {
+      "nodemon": "^3.0.1",
+      "jest": "^29.6.4"
+    }
+  }
