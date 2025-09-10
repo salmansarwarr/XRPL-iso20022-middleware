@@ -1,6 +1,5 @@
 // src/middleware/auth.js
 const jwt = require('jsonwebtoken');
-const logger = require('../config/logger');
 
 class AuthMiddleware {
   constructor(apiController) {
@@ -28,7 +27,7 @@ class AuthMiddleware {
 
         const keyData = this.apiController.validateApiKey(apiKey);
         if (!keyData) {
-          logger.warn('Invalid API key attempted', {
+          console.warn('Invalid API key attempted', {
             ip: req.ip,
             path: req.path,
             method: req.method
@@ -42,7 +41,7 @@ class AuthMiddleware {
             keyData.permissions && keyData.permissions.includes(perm)
           );
           if (!hasPermission) {
-            logger.warn('Insufficient permissions', {
+            console.warn('Insufficient permissions', {
               keyId: keyData.id,
               requiredPermissions,
               userPermissions: keyData.permissions,
@@ -58,13 +57,13 @@ class AuthMiddleware {
         }
 
         req.apiKey = keyData;
-        logger.debug('API key authenticated', {
+        console.debug('API key authenticated', {
           keyId: keyData.id,
           permissions: keyData.permissions
         });
         next();
       } catch (error) {
-        logger.error('Error in API key authentication:', error);
+        console.error('Error in API key authentication:', error);
         res.status(500).json({ error: 'Authentication error' });
       }
     };
@@ -87,13 +86,13 @@ class AuthMiddleware {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded;
-        logger.debug('JWT authenticated', {
+        console.debug('JWT authenticated', {
           userId: decoded.sub || decoded.id,
           permissions: decoded.permissions
         });
         next();
       } catch (error) {
-        logger.error('JWT verification failed:', {
+        console.error('JWT verification failed:', {
           error: error.message,
           ip: req.ip,
           path: req.path

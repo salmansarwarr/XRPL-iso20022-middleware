@@ -6,7 +6,6 @@ const compression = require('compression');
 const { Op } = require('sequelize');
 
 const DatabaseManager = require('./config/database');
-const logger = require('./config/logger');
 const TransactionController = require('./controllers/TransactionController');
 const ApiController = require('./controllers/ApiController');
 const AuthMiddleware = require('./middleware/auth');
@@ -32,50 +31,38 @@ class HoodieChickenMiddleware {
   }
 
   async initialize() {
-    try {
-      logger.info('Initializing Hoodie Chicken ISO 20022 Middleware...');
-      
+    try {      
       // Initialize database connection
-      logger.info('Connecting to database...');
       this.sequelize = await DatabaseManager.initPostgreSQL();
       
       // Initialize controllers with proper dependency injection
-      logger.info('Initializing controllers...');
       this.transactionController = new TransactionController(this.sequelize);
       this.apiController = new ApiController(this.sequelize);
       this.authMiddleware = new AuthMiddleware(this.apiController);
       
       // Initialize scheduler service
-      logger.info('Initializing scheduler service...');
       this.schedulerService = new SchedulerService(this.sequelize);
       
       // Setup Express middleware
-      logger.info('Setting up middleware...');
       this.setupMiddleware();
       
       // Setup API routes
-      logger.info('Setting up routes...');
       this.setupRoutes();
       
       // Setup error handling
-      logger.info('Setting up error handling...');
       this.setupErrorHandling();
       
       // Sync database models
-      logger.info('Syncing database models...');
       await this.sequelize.sync({ alter: true });
       
       // Start background scheduled jobs
-      logger.info('Starting scheduled jobs...');
       if (process.env.NODE_ENV !== 'test') {
         this.schedulerService.startTransactionMonitoring();
         this.schedulerService.startValidationCleanup();
       }
-      
-      logger.info('Hoodie Chicken ISO 20022 Middleware initialized successfully');
+    
       return this;
     } catch (error) {
-      logger.error('Failed to initialize middleware:', error);
       throw error;
     }
   }
@@ -139,26 +126,9 @@ class HoodieChickenMiddleware {
     this.app.use((req, res, next) => {
       const start = Date.now();
       
-      // Log request
-      logger.info(`${req.method} ${req.path}`, {
-        method: req.method,
-        url: req.url,
-        path: req.path,
-        ip: req.ip,
-        userAgent: req.get('User-Agent'),
-        timestamp: new Date().toISOString()
-      });
-      
       // Log response time
       res.on('finish', () => {
         const duration = Date.now() - start;
-        logger.info(`${req.method} ${req.path} - ${res.statusCode} - ${duration}ms`, {
-          method: req.method,
-          path: req.path,
-          statusCode: res.statusCode,
-          duration: duration,
-          ip: req.ip
-        });
       });
       
       next();
@@ -362,17 +332,6 @@ class HoodieChickenMiddleware {
       // Set default error status
       err.status = err.status || err.statusCode || 500;
       
-      // Log error details
-      logger.error('Application error:', {
-        error: err.message,
-        stack: err.stack,
-        status: err.status,
-        method: req.method,
-        path: req.path,
-        ip: req.ip,
-        userAgent: req.get('User-Agent')
-      });
-      
       // Prepare error response
       const errorResponse = {
         error: {
@@ -407,7 +366,6 @@ class HoodieChickenMiddleware {
     
     // Handle uncaught exceptions
     process.on('uncaughtException', (error) => {
-      logger.error('Uncaught Exception:', error);
       // Don't exit immediately, allow graceful shutdown
       setTimeout(() => {
         process.exit(1);
@@ -416,7 +374,6 @@ class HoodieChickenMiddleware {
     
     // Handle unhandled promise rejections
     process.on('unhandledRejection', (reason, promise) => {
-      logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
       // Don't exit immediately, log and continue
     });
   }
@@ -428,18 +385,9 @@ class HoodieChickenMiddleware {
     return new Promise((resolve, reject) => {
       this.server = this.app.listen(port, host, (error) => {
         if (error) {
-          logger.error('Failed to start server:', error);
           reject(error);
           return;
         }
-        
-        logger.info(`🚀 Hoodie Chicken ISO 20022 Middleware started successfully!`);
-        logger.info(`📡 Server listening on ${host}:${port}`);
-        logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-        logger.info(`🔗 XRPL Node: ${process.env.XRPL_NODE || 'wss://xrplcluster.com'}`);
-        logger.info(`💾 Database: ${process.env.DB_TYPE || 'postgresql'}`);
-        logger.info(`📋 API Documentation: http://${host}:${port}/api/v1/docs`);
-        logger.info(`❤️  Health Check: http://${host}:${port}/health`);
         
         resolve(this.server);
       });
@@ -447,9 +395,9 @@ class HoodieChickenMiddleware {
       // Handle server errors
       this.server.on('error', (error) => {
         if (error.code === 'EADDRINUSE') {
-          logger.error(`Port ${port} is already in use`);
+          console.error(`Port ${port} is already in use`);
         } else {
-          logger.error('Server error:', error);
+          console.error('Server error:', error);
         }
         reject(error);
       });
@@ -457,26 +405,26 @@ class HoodieChickenMiddleware {
   }
 
   async stop() {
-    logger.info('🛑 Stopping Hoodie Chicken ISO 20022 Middleware...');
+    console.info('🛑 Stopping Hoodie Chicken ISO 20022 Middleware...');
     
     try {
       const shutdownPromises = [];
       
       // Stop scheduled jobs
       if (this.schedulerService) {
-        logger.info('Stopping scheduled jobs...');
+        console.info('Stopping scheduled jobs...');
         this.schedulerService.stopAllJobs();
       }
       
       // Close database connections
       if (this.sequelize) {
-        logger.info('Closing database connections...');
+        console.info('Closing database connections...');
         shutdownPromises.push(this.sequelize.close());
       }
       
       // Close HTTP server
       if (this.server) {
-        logger.info('Closing HTTP server...');
+        console.info('Closing HTTP server...');
         shutdownPromises.push(new Promise((resolve, reject) => {
           this.server.close((error) => {
             if (error) {
@@ -491,9 +439,9 @@ class HoodieChickenMiddleware {
       // Wait for all shutdown operations
       await Promise.all(shutdownPromises);
       
-      logger.info('✅ Hoodie Chicken ISO 20022 Middleware stopped gracefully');
+      console.info('✅ Hoodie Chicken ISO 20022 Middleware stopped gracefully');
     } catch (error) {
-      logger.error('❌ Error during shutdown:', error);
+      console.error('❌ Error during shutdown:', error);
       throw error;
     }
   }
@@ -524,10 +472,10 @@ if (require.main === module) {
       await middleware.start();
       
       // Log startup success
-      logger.info('🎉 Application startup completed successfully!');
+      console.info('🎉 Application startup completed successfully!');
       
     } catch (error) {
-      logger.error('💥 Failed to start application:', error);
+      console.error('💥 Failed to start application:', error);
       process.exit(1);
     }
   }
@@ -538,32 +486,32 @@ if (require.main === module) {
 
 // Graceful shutdown handlers
 process.on('SIGINT', async () => {
-  logger.info('🔄 Received SIGINT (Ctrl+C), initiating graceful shutdown...');
+  console.info('🔄 Received SIGINT (Ctrl+C), initiating graceful shutdown...');
   try {
     await middleware.stop();
-    logger.info('👋 Goodbye!');
+    console.info('👋 Goodbye!');
     process.exit(0);
   } catch (error) {
-    logger.error('Error during SIGINT shutdown:', error);
+    console.error('Error during SIGINT shutdown:', error);
     process.exit(1);
   }
 });
 
 process.on('SIGTERM', async () => {
-  logger.info('🔄 Received SIGTERM, initiating graceful shutdown...');
+  console.info('🔄 Received SIGTERM, initiating graceful shutdown...');
   try {
     await middleware.stop();
-    logger.info('👋 Goodbye!');
+    console.info('👋 Goodbye!');
     process.exit(0);
   } catch (error) {
-    logger.error('Error during SIGTERM shutdown:', error);
+    console.error('Error during SIGTERM shutdown:', error);
     process.exit(1);
   }
 });
 
 // Handle process warnings
 process.on('warning', (warning) => {
-  logger.warn('Process warning:', {
+  console.warn('Process warning:', {
     name: warning.name,
     message: warning.message,
     stack: warning.stack

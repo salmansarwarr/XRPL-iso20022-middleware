@@ -157,7 +157,7 @@ src/
 ├── app.js                  # Main application
 ├── config/
 │   ├── database.js        # Database configuration
-│   └── logger.js          # Winston logger
+│   └── console.js          # Winston console
 ├── controllers/
 │   ├── TransactionController.js
 │   └── ApiController.js

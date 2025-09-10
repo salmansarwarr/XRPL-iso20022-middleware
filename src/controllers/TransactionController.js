@@ -4,7 +4,6 @@ const XRPLService = require('../services/XRPLService');
 const MappingEngine = require('../services/MappingEngine');
 const XMLGenerator = require('../services/XMLGenerator');
 const ValidationService = require('../services/ValidationService');
-const logger = require('../config/logger');
 const { Op } = require('sequelize');
 
 class TransactionController {
@@ -49,7 +48,7 @@ class TransactionController {
       }
 
       // Get transaction from XRPL
-      logger.info(`Fetching XRPL transaction: ${txHash}`);
+      console.log(`Fetching XRPL transaction: ${txHash}`)
       const xrplTx = await this.xrplService.getTransaction(txHash);
       
       if (!this.xrplService.isHCTTransaction(xrplTx)) {
@@ -57,7 +56,7 @@ class TransactionController {
       }
 
       // Map to ISO 20022
-      logger.info(`Mapping transaction to ISO 20022: ${txHash}`);
+      console.info(`Mapping transaction to ISO 20022: ${txHash}`);
       const mappedData = this.mappingEngine.mapXRPLToISO20022(xrplTx);
       
       // Generate XML
@@ -73,7 +72,7 @@ class TransactionController {
       }
 
       // Validate XML
-      logger.info(`Validating XML for transaction: ${txHash}`);
+      console.info(`Validating XML for transaction: ${txHash}`);
       const validationResults = await this.validationService.validateXML(xmlString, messageType);
 
       // Save to database
@@ -98,9 +97,9 @@ class TransactionController {
         validation: validationResults
       });
 
-      logger.info(`Successfully processed transaction: ${txHash}`);
+      console.info(`Successfully processed transaction: ${txHash}`);
     } catch (error) {
-      logger.error('Error processing transaction:', {
+      console.error('Error processing transaction:', {
         error: error.message,
         stack: error.stack,
         txHash: req.params.txHash
@@ -125,7 +124,7 @@ class TransactionController {
 
       res.json(transaction);
     } catch (error) {
-      logger.error('Error fetching transaction:', {
+      console.error('Error fetching transaction:', {
         error: error.message,
         stack: error.stack,
         transactionId: req.params.id
@@ -167,7 +166,7 @@ class TransactionController {
         }
       });
     } catch (error) {
-      logger.error('Error listing transactions:', {
+      console.error('Error listing transactions:', {
         error: error.message,
         stack: error.stack,
         query: req.query
@@ -197,7 +196,7 @@ class TransactionController {
       res.set('Content-Type', 'application/xml');
       res.send(transaction.iso20022Xml);
     } catch (error) {
-      logger.error('Error fetching ISO 20022 XML:', {
+      console.error('Error fetching ISO 20022 XML:', {
         error: error.message,
         stack: error.stack,
         transactionId: req.params.id
@@ -240,7 +239,7 @@ class TransactionController {
         validation: validationResults
       });
     } catch (error) {
-      logger.error('Error revalidating transaction:', {
+      console.error('Error revalidating transaction:', {
         error: error.message,
         stack: error.stack,
         transactionId: req.params.id

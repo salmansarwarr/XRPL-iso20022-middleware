@@ -1,5 +1,4 @@
 const { create } = require('xmlbuilder2');
-const logger = require('../config/logger');
 
 class XMLGenerator {
   constructor() {
@@ -77,10 +76,10 @@ class XMLGenerator {
       }
 
       const xmlString = doc.end({ prettyPrint: true });
-      logger.info('Generated ISO 20022 pacs.008 XML');
+      console.info('Generated ISO 20022 pacs.008 XML');
       return xmlString;
     } catch (error) {
-      logger.error('Error generating XML:', error);
+      console.error('Error generating XML:', error);
       throw error;
     }
   }
@@ -144,10 +143,10 @@ class XMLGenerator {
       }
 
       const xmlString = doc.end({ prettyPrint: true });
-      logger.info('Generated ISO 20022 pain.001 XML');
+      console.info('Generated ISO 20022 pain.001 XML');
       return xmlString;
     } catch (error) {
-      logger.error('Error generating pain.001 XML:', error);
+      console.error('Error generating pain.001 XML:', error);
       throw error;
     }
   }

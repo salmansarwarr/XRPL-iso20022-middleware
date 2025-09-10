@@ -1,5 +1,4 @@
 const { v4: uuidv4 } = require('uuid');
-const logger = require('../config/logger');
 
 class MappingEngine {
   constructor() {
@@ -9,15 +8,21 @@ class MappingEngine {
     };
   }
 
+  generateMsgId(source = '') {
+    // Use UUID if no source, but strip hyphens and trim to 35 chars
+    const raw = source || uuidv4();
+    return raw.replace(/-/g, '').slice(0, 35);
+  }
+
   mapXRPLToISO20022(xrplTransaction, messageType = 'pacs.008') {
     try {
       const mappedData = {
-        messageId: uuidv4(),
+        messageId: uuidv4().replace(/-/g, '').slice(0, 35),
         creationDateTime: new Date().toISOString(),
         numberOfTransactions: '1',
         controlSum: this.extractAmount(xrplTransaction.Amount),
-        instructionId: xrplTransaction.hash || uuidv4(),
-        endToEndId: xrplTransaction.hash || uuidv4(),
+        instructionId: this.generateMsgId(xrplTransaction.hash),
+        endToEndId: this.generateMsgId(xrplTransaction.hash),
         transactionId: xrplTransaction.hash,
         instructedAmount: {
           currency: xrplTransaction.Amount.currency || 'HCT',
@@ -46,10 +51,10 @@ class MappingEngine {
         purposeCode: 'CBFF' // Crypto/Blockchain transaction
       };
 
-      logger.info(`Mapped XRPL transaction ${xrplTransaction.hash} to ISO 20022 format`);
+      console.info(`Mapped XRPL transaction ${xrplTransaction.hash} to ISO 20022 format`);
       return mappedData;
     } catch (error) {
-      logger.error('Error mapping XRPL to ISO 20022:', error);
+      console.error('Error mapping XRPL to ISO 20022:', error);
       throw error;
     }
   }
@@ -57,10 +62,19 @@ class MappingEngine {
   extractAmount(amount) {
     if (typeof amount === 'string') {
       return (parseInt(amount) / 1000000).toString(); // Convert drops to XRP
-    } else if (typeof amount === 'object') {
+    } else if (typeof amount === 'object' && amount.value) {
       return amount.value;
     }
     return '0';
+  }
+
+  getCurrency(amount) {
+    if (typeof amount === 'string') {
+      return 'XRP';
+    } else if (typeof amount === 'object' && amount.currency) {
+      return amount.currency;
+    }
+    return 'XRP';
   }
 
   extractAccountName(account) {

@@ -13,7 +13,7 @@ function createTransactionRoutes(transactionController, authMiddleware) {
 
   // Process XRPL transaction
   router.post('/process/:txHash', 
-    authMiddleware.authenticateApiKey(['write']), 
+    // authMiddleware.authenticateApiKey(['write']), 
     async (req, res) => {
       try {
         await transactionController.processXRPLTransaction(req, res);

@@ -1,8 +1,8 @@
 // test/setup.js - Component verification test
 require('dotenv').config();
 
-// Mock logger for testing
-const mockLogger = {
+// Mock console for testing
+const mockconsole = {
   info: (...args) => console.log('[INFO]', ...args),
   error: (...args) => console.error('[ERROR]', ...args),
   warn: (...args) => console.warn('[WARN]', ...args),
@@ -14,11 +14,11 @@ async function testComponents() {
   console.log('🧪 Testing Hoodie Chicken Middleware Components...\n');
 
   try {
-    // Test 1: Logger
-    console.log('1️⃣ Testing Logger...');
-    const logger = require('../src/config/logger');
-    logger.info('Logger test successful');
-    console.log('✅ Logger working\n');
+    // Test 1: console
+    console.log('1️⃣ Testing console...');
+    const console = require('../src/config/console');
+    console.info('console test successful');
+    console.log('✅ console working\n');
 
     // Test 2: Database Manager
     console.log('2️⃣ Testing Database Manager...');
@@ -86,7 +86,7 @@ async function testComponents() {
 
     console.log('🎉 All components loaded successfully!');
     console.log('📋 Component Summary:');
-    console.log('   - Logger: ✅');
+    console.log('   - console: ✅');
     console.log('   - Database Manager: ✅');
     console.log('   - Transaction Controller: ✅');
     console.log('   - API Controller: ✅');

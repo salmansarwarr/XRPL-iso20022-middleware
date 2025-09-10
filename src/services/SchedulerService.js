@@ -1,7 +1,6 @@
 const cron = require('cron');
 const XRPLService = require('./XRPLService');
 const TransactionController = require('../controllers/TransactionController');
-const logger = require('../config/logger');
 
 class SchedulerService {
   constructor(sequelize) {
@@ -16,13 +15,13 @@ class SchedulerService {
       try {
         await this.scanForNewTransactions();
       } catch (error) {
-        logger.error('Error in transaction monitoring job:', error);
+        console.error('Error in transaction monitoring job:', error);
       }
     });
 
     job.start();
     this.jobs.push(job);
-    logger.info('Started transaction monitoring job');
+    console.info('Started transaction monitoring job');
   }
 
   startValidationCleanup() {
@@ -31,13 +30,13 @@ class SchedulerService {
       try {
         await this.cleanupOldValidations();
       } catch (error) {
-        logger.error('Error in validation cleanup job:', error);
+        console.error('Error in validation cleanup job:', error);
       }
     });
 
     job.start();
     this.jobs.push(job);
-    logger.info('Started validation cleanup job');
+    console.info('Started validation cleanup job');
   }
 
   async scanForNewTransactions() {
@@ -56,7 +55,7 @@ class SchedulerService {
             });
             
             if (!existing) {
-              logger.info(`Found new HCT transaction: ${tx.tx.hash}`);
+              console.info(`Found new HCT transaction: ${tx.tx.hash}`);
               // Process automatically
               const req = { params: { txHash: tx.tx.hash }, query: {} };
               const res = {
@@ -69,7 +68,7 @@ class SchedulerService {
         }
       }
     } catch (error) {
-      logger.error('Error scanning for new transactions:', error);
+      console.error('Error scanning for new transactions:', error);
     }
   }
 
@@ -88,16 +87,16 @@ class SchedulerService {
         }
       );
 
-      logger.info(`Cleaned up validation data for ${result[0]} old transactions`);
+      console.info(`Cleaned up validation data for ${result[0]} old transactions`);
     } catch (error) {
-      logger.error('Error cleaning up old validations:', error);
+      console.error('Error cleaning up old validations:', error);
     }
   }
 
   stopAllJobs() {
     this.jobs.forEach(job => job.stop());
     this.jobs = [];
-    logger.info('Stopped all scheduled jobs');
+    console.info('Stopped all scheduled jobs');
   }
 }
 

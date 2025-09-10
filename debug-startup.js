@@ -17,12 +17,7 @@ console.log('');
 async function debugStartup() {
   try {
     console.log('2️⃣ Loading Components:');
-    
-    // Load logger first
-    console.log('   Loading logger...');
-    const logger = require('./src/config/logger');
-    console.log('   ✅ Logger loaded');
-    
+  
     // Load database manager
     console.log('   Loading database manager...');
     const DatabaseManager = require('./src/config/database');

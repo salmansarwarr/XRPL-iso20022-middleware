@@ -1,5 +1,4 @@
 const xrpl = require('xrpl');
-const logger = require('../config/logger');
 
 class XRPLService {
   constructor() {
@@ -12,9 +11,9 @@ class XRPLService {
       this.client = new xrpl.Client(process.env.XRPL_NODE);
       await this.client.connect();
       this.connected = true;
-      logger.info('XRPL client connected');
+      console.info('XRPL client connected');
     } catch (error) {
-      logger.error('XRPL connection failed:', error);
+      console.error('XRPL connection failed:', error);
       throw error;
     }
   }
@@ -23,7 +22,7 @@ class XRPLService {
     if (this.client && this.connected) {
       await this.client.disconnect();
       this.connected = false;
-      logger.info('XRPL client disconnected');
+      console.info('XRPL client disconnected');
     }
   }
 
@@ -48,7 +47,7 @@ class XRPLService {
       const response = await this.client.request(request);
       return response.result;
     } catch (error) {
-      logger.error('Error fetching account transactions:', error);
+      console.error('Error fetching account transactions:', error);
       throw error;
     }
   }
@@ -65,17 +64,53 @@ class XRPLService {
       });
       return response.result;
     } catch (error) {
-      logger.error('Error fetching transaction:', error);
+      console.error('Error fetching transaction:', error);
       throw error;
     }
   }
 
   isHCTTransaction(transaction) {
-    return transaction.TransactionType === 'Payment' && 
-           transaction.Amount && 
-           typeof transaction.Amount === 'object' &&
-           transaction.Amount.currency === process.env.HCT_CURRENCY_CODE &&
-           transaction.Amount.issuer === process.env.HCT_TOKEN_ISSUER;
+    console.log(transaction);
+    
+    // Check if it's a Payment transaction
+    if (transaction.TransactionType !== 'Payment') {
+      return false;
+    }
+
+    // Check if Amount exists
+    if (!transaction.Amount) {
+      return false;
+    }
+
+    // Handle XRP native payments (Amount is a string)
+    if (typeof transaction.Amount === 'string') {
+      // This is an XRP payment - you can add additional criteria here
+      // For example, minimum amount thresholds or specific address patterns
+      return this.isValidXRPPayment(transaction);
+    }
+
+    // Handle token payments (Amount is an object)
+    if (typeof transaction.Amount === 'object') {
+      return transaction.Amount.currency === process.env.HCT_CURRENCY_CODE &&
+             transaction.Amount.issuer === process.env.HCT_TOKEN_ISSUER;
+    }
+
+    return false;
+  }
+
+  isValidXRPPayment(transaction) {
+    // Add your criteria for what constitutes a valid HCT XRP payment
+    // Examples:
+    
+    // 1. Minimum amount threshold (15 XRP = 15,000,000 drops)
+    const minAmountDrops = parseInt(process.env.MIN_XRP_AMOUNT_DROPS || '1000000');
+    const amountDrops = parseInt(transaction.Amount);
+    
+    if (amountDrops < minAmountDrops) {
+      return false;
+    }
+
+    return true;
   }
 
   extractMemo(transaction) {
@@ -87,6 +122,24 @@ class XRPLService {
     }
     return null;
   }
+
+    // Helper method to get currency info from Amount
+    getCurrencyInfo(amount) {
+      if (typeof amount === 'string') {
+        return {
+          currency: 'XRP',
+          value: (parseInt(amount) / 1000000).toString(), // Convert drops to XRP
+          issuer: null
+        };
+      } else if (typeof amount === 'object') {
+        return {
+          currency: amount.currency,
+          value: amount.value,
+          issuer: amount.issuer
+        };
+      }
+      return null;
+    }
 }
 
 module.exports = XRPLService;

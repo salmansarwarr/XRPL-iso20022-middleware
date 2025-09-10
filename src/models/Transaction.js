@@ -1,5 +1,4 @@
 const { DataTypes } = require('sequelize');
-
 const TransactionModel = (sequelize) => {
   return sequelize.define('Transaction', {
     id: {

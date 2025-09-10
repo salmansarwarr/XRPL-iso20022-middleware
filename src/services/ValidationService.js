@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { parseString } = require('xml2js');
-const logger = require('../config/logger');
+const { DOMParser } = require('@xmldom/xmldom');
 
 class ValidationService {
   constructor() {
@@ -38,7 +38,7 @@ class ValidationService {
       errors: [],
       warnings: []
     };
-
+  
     try {
       // Basic XML structure validation
       await this.validateXMLStructure(xmlString);
@@ -46,18 +46,22 @@ class ValidationService {
       // ISO 20022 specific validation
       await this.validateISO20022Rules(xmlString, messageType);
       
-      // SWIFT MyStandards validation (if available)
-      if (this.swiftSandboxUrl) {
-        const swiftResults = await this.validateWithSWIFT(xmlString, messageType);
-        results.swiftValidation = swiftResults;
+      // Enhanced validation instead of SWIFT
+      const enhancedResults = await this.validateWithEnhancedRules(xmlString, messageType);
+      results.swiftValidation = enhancedResults;
+  
+      if (!enhancedResults.valid) {
+        results.isValid = false;
+        results.errors.push(...enhancedResults.errors);
+        results.warnings.push(...enhancedResults.warnings);
       }
-
-      logger.info(`XML validation completed for ${messageType}`);
+  
+      console.info(`XML validation completed for ${messageType}`);
       return results;
     } catch (error) {
       results.isValid = false;
       results.errors.push(error.message);
-      logger.error('XML validation failed:', error);
+      console.error('XML validation failed:', error);
       return results;
     }
   }
@@ -118,33 +122,73 @@ class ValidationService {
     return null;
   }
 
-  async validateWithSWIFT(xmlString, messageType) {
+  async validateWithEnhancedRules(xmlString, messageType) {
+    const errors = [];
+    const warnings = [];
+    
     try {
-      const response = await axios.post(`${this.swiftSandboxUrl}/validate`, {
-        message: xmlString,
-        messageType: messageType
-      }, {
-        timeout: 10000,
-        headers: {
-          'Content-Type': 'application/json'
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xmlString, 'application/xml');
+      
+      // Check for required elements based on message type
+      const requiredElements = this.getRequiredElements(messageType);
+      
+      for (const element of requiredElements) {
+        if (!doc.getElementsByTagName(element).length) {
+          errors.push(`Missing required element: ${element}`);
         }
-      });
-
+      }
+      
+      // Validate BIC codes
+      const bicElements = doc.getElementsByTagName('BIC');
+      for (let i = 0; i < bicElements.length; i++) {
+        const bic = bicElements[i].textContent;
+        if (!this.isValidBIC(bic)) {
+          errors.push(`Invalid BIC format: ${bic}`);
+        }
+      }
+      
+      // Validate amounts
+      const amountElements = doc.getElementsByTagName('InstdAmt');
+      for (let i = 0; i < amountElements.length; i++) {
+        const amount = amountElements[i].textContent;
+        if (!this.isValidAmount(amount)) {
+          errors.push(`Invalid amount format: ${amount}`);
+        }
+      }
+      
       return {
-        valid: response.data.valid,
-        errors: response.data.errors || [],
-        warnings: response.data.warnings || []
+        valid: errors.length === 0,
+        errors: errors,
+        warnings: warnings
       };
     } catch (error) {
-      logger.warn('SWIFT validation service unavailable:', error.message);
       return {
-        valid: null,
-        errors: ['SWIFT validation service unavailable'],
+        valid: false,
+        errors: [`Enhanced validation failed: ${error.message}`],
         warnings: []
       };
     }
   }
-
+  
+  getRequiredElements(messageType) {
+    const elementMap = {
+      'pacs.008': ['GrpHdr', 'CdtTrfTxInf', 'IntrBkSttlmAmt'],
+      'pain.001': ['GrpHdr', 'PmtInf', 'CdtTrfTxInf']
+    };
+    return elementMap[messageType] || [];
+  }
+  
+  isValidBIC(bic) {
+    const bicRegex = /^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/;
+    return bicRegex.test(bic);
+  }
+  
+  isValidAmount(amount) {
+    const amountRegex = /^\d+(\.\d{1,5})?$/;
+    return amountRegex.test(amount);
+  }
+  
   addKYCAMLFields(mappedData, kycData = null) {
     if (!kycData) return mappedData;
 

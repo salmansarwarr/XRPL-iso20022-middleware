@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const logger = require('../config/logger');
 
 class ApiController {
   constructor(sequelize) {
@@ -45,9 +44,9 @@ class ApiController {
         permissions: permissions
       });
 
-      logger.info(`Generated new API key: ${keyId} for ${name}`);
+      console.info(`Generated new API key: ${keyId} for ${name}`);
     } catch (error) {
-      logger.error('Error generating API key:', error);
+      console.error('Error generating API key:', error);
       res.status(500).json({ error: error.message });
     }
   }
@@ -64,7 +63,7 @@ class ApiController {
 
       res.json({ apiKeys: keys });
     } catch (error) {
-      logger.error('Error listing API keys:', error);
+      console.error('Error listing API keys:', error);
       res.status(500).json({ error: error.message });
     }
   }
@@ -76,12 +75,12 @@ class ApiController {
       if (this.apiKeys.has(keyId)) {
         this.apiKeys.delete(keyId);
         res.json({ message: 'API key revoked successfully' });
-        logger.info(`Revoked API key: ${keyId}`);
+        console.info(`Revoked API key: ${keyId}`);
       } else {
         res.status(404).json({ error: 'API key not found' });
       }
     } catch (error) {
-      logger.error('Error revoking API key:', error);
+      console.error('Error revoking API key:', error);
       res.status(500).json({ error: error.message });
     }
   }
