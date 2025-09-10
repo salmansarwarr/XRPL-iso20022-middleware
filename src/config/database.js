@@ -1,5 +1,4 @@
 const { Sequelize } = require('sequelize');
-const mongoose = require('mongoose');
 
 class DatabaseManager {
   constructor() {
@@ -23,17 +22,6 @@ class DatabaseManager {
       return this.sequelize;
     } catch (error) {
       console.error('PostgreSQL connection failed:', error);
-      throw error;
-    }
-  }
-
-  async initMongoDB() {
-    try {
-      await mongoose.connect(process.env.MONGO_URL);
-      console.info('MongoDB connected successfully');
-      return mongoose;
-    } catch (error) {
-      console.error('MongoDB connection failed:', error);
       throw error;
     }
   }
